@@ -41,13 +41,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define TAPPING_TERM 130
 #define TAPPING_TERM_PER_KEY
-#define PERMISSIVE_HOLD
+
+#define SPC_SFT_TAPPING_TERM 80
+
+/* #define PERMISSIVE_HOLD */
+/* #define HOLD_ON_OTHER_KEY_PRESS */
 
 // #define IGNORE_MOD_TAP_INTERRUPT_PER_KEY
+
+// Prefer sequence of taps instead of HOLD version
 #define IGNORE_MOD_TAP_INTERRUPT
 
-#define TAPPING_FORCE_HOLD
-// #define RETRO_TAPPING
+/* #define TAPPING_FORCE_HOLD */
+
+/* #define RETRO_TAPPING_PER_KEY */
+/* #define RETRO_TAPPING */
 
 // #define ONESHOT_TAP_TOGGLE 0  /* Tapping this number of times holds the key
 // until tapped once again. */

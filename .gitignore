@@ -2,4 +2,3 @@ obj_*
 *.hex
 *.elf
 *.map
-qmk_firmware

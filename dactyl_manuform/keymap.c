@@ -1,12 +1,12 @@
 #include QMK_KEYBOARD_H
 
 // From root of qmk_firmware
-// 
+//
 // To only compile:
 // make handwired/dactyl_manuform/4x5:frisoft
-// 
+//
 // To compile and flash:
-// qmk flash -kb handwired/dactyl_manuform/4x5 -km frisoft 
+// qmk flash -kb handwired/dactyl_manuform/4x5 -km frisoft
 
 // ======================================================================
 // Super CMD-TAB
@@ -56,13 +56,69 @@
 #define _L3 3
 // #define _RAISE2 2
 // #define _RAISE3 3
-// #define _NUMPAD 4  
-// #define _SYM 5  
+// #define _NUMPAD 4
+// #define _SYM 5
 
 // Fillers to make layering more clear
 
 #define ____ KC_TRNS
 #define XXXX KC_NO
+
+
+// SPC_SFT implement SFT_T(KC_SPC) with RETRO_TAPPING
+// This custom implementation is needed as the RETRO_TAPPING does not work well:
+// It is deactiated by a key pressed immediately before the SFT_T(KC_SPC) key.
+
+enum custom_keycodes {
+  SPC_SFT
+};
+
+bool spc_sft_active = false;
+bool spc_sft_sent = false;
+bool spc_sft_retrotapping = false;
+uint16_t spc_sft_timer = 0;
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+	switch(keycode) {
+		case SPC_SFT:
+			if (record->event.pressed) {
+        if(!spc_sft_active) {
+          spc_sft_active = true;
+          spc_sft_sent = false;
+          spc_sft_retrotapping = false;
+        }
+        spc_sft_timer = timer_read();
+			} else {
+        unregister_code(KC_LSFT);
+        if(timer_elapsed(spc_sft_timer) <= SPC_SFT_TAPPING_TERM || spc_sft_retrotapping ) {
+          tap_code(KC_SPC);
+        }
+        spc_sft_active = false;
+        spc_sft_retrotapping = false;
+      }
+			return false;
+			break;
+    default:
+      if(spc_sft_retrotapping) {
+        spc_sft_retrotapping = false;
+      }
+			return true;
+			break;
+  }
+  return true;
+}
+
+void matrix_scan_user(void) {
+  if (spc_sft_active) {
+    if (!spc_sft_sent && timer_elapsed(spc_sft_timer) > SPC_SFT_TAPPING_TERM) {
+      register_code(KC_LSFT);
+      spc_sft_sent = true;
+      // It is important that the retrotapping is enabled as late as possible or it well be disabled by a
+      // key pressed just before the SPC_SFT
+      spc_sft_retrotapping = true;
+    }
+  }
+}
 
 // #define SFT_ESC  SFT_T(KC_ESC)
 // #define CTL_BSPC CTL_T(KC_BSPC)
@@ -103,8 +159,13 @@
 uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         // case LT(_L1,KC_BSPC):
-        case SFT_T(KC_SPC):
-            return 180;
+        /* case SFT_T(KC_SPC): */
+        /*     // A very low value (<100) works only if RETRO_TAPPING is enabled. */
+        /*     // A value <80 seems to miss some spaces for some reason. */
+        /*     // Also, not using IGNORE_MOD_TAP_INTERRUPT seems to improve the missed spaces. */
+        /*     // Retro tapping does not work if a key is pressed very quickly before the SFT_T(KC_SPC) key. */
+        /*     //return 100; */
+        /*     return 130; */
         case SFT_T(KC_Z):
         case CTL_T(KC_X):
         case ALT_T(KC_C):
@@ -122,13 +183,27 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
 	/* case SFT_T(KC_A): */
 	/* case SFT_T(KC_SCLN): */
             // return 180;
-            return 250;
-        case LT(_L1,KC_BSPC):
-            return TAPPING_TERM-30;
+            // return 250;
+            return 300;
+        /* case LT(_L1,KC_BSPC): */
+        /*     return TAPPING_TERM-30; */
         default:
             return TAPPING_TERM;
     }
 }
+
+/*
+bool get_retro_tapping(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case SFT_T(KC_SPC):
+        case KC_SPC:
+        case KC_RSFT:
+            return true;
+        default:
+            return false;
+    }
+}
+*/
 
 // bool get_ignore_mod_tap_interrupt(uint16_t keycode, keyrecord_t *record) {
 //     switch (keycode) {
@@ -198,13 +273,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_Q,          KC_W,           KC_E,             KC_R,           KC_T,                            KC_Y,    KC_U,          KC_I,           KC_O,           KC_P,            \
   KC_A,          KC_S,           KC_D,             KC_F,           KC_G,                            KC_H,    KC_J,          KC_K,           KC_L,           KC_SCLN,         \
   SFT_T(KC_Z),   CTL_T(KC_X),    ALT_T(KC_C),      GUI_T(KC_V),    KC_B,                            KC_N,    GUI_T(KC_M),   ALT_T(KC_COMM), CTL_T(KC_DOT),  SFT_T(KC_QUOT),  \
-                 KC_LBRC,        KC_RBRC,                                                                                   KC_MINS,        KC_EQL,                        \
-                                                 MO(_L1),           KC_LSFT,                           KC_RSFT, SFT_T(KC_SPC), \
+                 XXXX,           XXXX,                                                                                      XXXX,           XXXX,                            \
+                                                 MO(_L1),           OSM(MOD_LSFT),                     SPC_SFT, SPC_SFT, \
                                                  OSM(MOD_LCTL),     KC_ESC,                            KC_ESC, OSM(MOD_LCTL),                                             \
                                                  RESET,      OSM(MOD_LGUI),               OSM(MOD_LGUI), RESET
 ),
-                                                      // OSL(_L2), LT(_L1,KC_BSPC),            SFT_T(KC_SPC), KC_ENT,                                                     
-                                            //  LT(_L2, KC_TAB), LT(_L1,KC_BSPC),              SFT_T(KC_SPC), KC_ENT,                                                    
+                                                      // OSL(_L2), LT(_L1,KC_BSPC),            SFT_T(KC_SPC), KC_ENT,
+                                            //  LT(_L2, KC_TAB), LT(_L1,KC_BSPC),              SFT_T(KC_SPC), KC_ENT,
 
 [_L1] = LAYOUT( \
   KC_1,          KC_2,           KC_3,             KC_4,           KC_5,                            KC_6,    KC_7,          KC_8,           KC_9,           KC_0, \
@@ -227,8 +302,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                    ____, ____,           ____,      OSL(_L3)                                                     \
 ),
 */
-  // ____,      ____,       S(KC_ESC),  S(KC_BSPC), S(KC_DEL),                       S(KC_LEFT), S(KC_DOWN), S(KC_UP),   S(KC_RIGHT), OSM(MOD_LALT),   
-  //                                                 ____, ____,           S(KC_SPC), S(KC_ENT),                                                   
+  // ____,      ____,       S(KC_ESC),  S(KC_BSPC), S(KC_DEL),                       S(KC_LEFT), S(KC_DOWN), S(KC_UP),   S(KC_RIGHT), OSM(MOD_LALT),
+  //                                                 ____, ____,           S(KC_SPC), S(KC_ENT),
 
 [_L3] = LAYOUT( \
   KC_F1,  KC_F2,  KC_F3, KC_F4, KC_F5,                             KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, \
@@ -363,7 +438,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  *                                       '------+------' '------+------'
  *                                       |      |      | |      |      |
  *                                       '------+------' '------+------'
- */ 
+ */
 
 
 /*

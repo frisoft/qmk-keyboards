@@ -24,6 +24,13 @@ define mklinks
 	$(foreach K, $(KEYBOARDS), ln -s $(shell pwd)/$(K) qmk_firmware/keyboards/$(PATH_$(K))/keymaps/$(USER))
 endef
 
+define clean_all
+	rm -rf obj_*
+	rm -f *.elf
+	rm -f *.map
+	rm -f *.hex
+endef
+
 setup:
 	$(call rmlinks)
 	git submodule update --init --recursive
@@ -32,10 +39,8 @@ setup:
 update:
 	$(call rmlinks)
 	cd qmk_firmware; git fetch; git checkout master; git pull
+	$(call clean_all)
 	$(call mklinks)
 
 clean:
-	rm -rf obj_*
-	rm -f *.elf
-	rm -f *.map
-	rm -f *.hex
+	$(call clean_all)
