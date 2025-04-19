@@ -17,13 +17,18 @@ make setup
 Flash all keyboards
 
 ```bash
-make
+# Open the nix-shell, ONLY ONCE
+cd qmk_firmaware
+nix-shell
+cd ..
+ 
+sudo make
 ```
 
 Flash the Dactyl Manuform keyboard
 
 ```bash
-make dactyl_manuform
+sudo make dactyl_manuform
 ```
 
 Clean up
